@@ -14,14 +14,24 @@ public class ProfileService {
 
     private final ProfileRepository profileRepository;
 
-    public ProfileDTO registerProfile(ProfileDTO profileDTO){
+    private final EmailService emailService;
+
+    public ProfileDTO registerProfile(ProfileDTO profileDTO) {
         ProfileEntity newProfile = toEntity(profileDTO);
         newProfile.setActivationToken(UUID.randomUUID().toString());
         newProfile = profileRepository.save(newProfile);
+
+        // send activation email
+        String activationLink = "http://localhost:8080/activate?token=" + newProfile.getActivationToken();
+        String subject = "Activate your Finance Manager Account";
+        String body = "Click on the following link to activate your account: " + activationLink;
+        emailService.sendEmail(newProfile.getEmail(), subject, body);
+
         return toDTO(newProfile);
     }
-    //DTO -> Entity
-    public ProfileEntity toEntity(ProfileDTO profileDTO){
+
+    // DTO -> Entity
+    public ProfileEntity toEntity(ProfileDTO profileDTO) {
         return ProfileEntity.builder()
                 .id(profileDTO.getId())
                 .name(profileDTO.getName())
@@ -33,8 +43,8 @@ public class ProfileService {
                 .build();
     }
 
-    //Entity -> DTO
-    public ProfileDTO toDTO(ProfileEntity profileEntity){
+    // Entity -> DTO
+    public ProfileDTO toDTO(ProfileEntity profileEntity) {
         return ProfileDTO.builder()
                 .id(profileEntity.getId())
                 .name(profileEntity.getName())
